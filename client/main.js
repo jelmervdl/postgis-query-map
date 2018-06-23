@@ -82,10 +82,19 @@ class Connection {
 }
 
 window.pg = new Client();
+
 const conn = window.pg.connect({
 	host: 'localhost',
 	port: 5432,
-	database: 'webcie'
+	user: '',
+	password: '',
+	database: '',
+	ssh: {
+		host: '',
+		port: 22,
+		user: '',
+		password: ''
+	}
 });
 
 conn.then(
@@ -95,5 +104,5 @@ conn.then(
 		};
 	},
 	err => {
-		console.error('Connection error', error);
+		console.error('Connection error', err);
 	});
