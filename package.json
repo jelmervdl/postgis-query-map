@@ -1,0 +1,26 @@
+{
+  "name": "postgis-query-map",
+  "version": "0.1.0",
+  "description": "PostgreSQL client for geospatial queries.",
+  "main": "build/host.js",
+  "scripts": {
+    "start": "electron .",
+    "start-debug": "electron --inspect-brk=5858 .",
+    "build": "npm run build-host && npm run build-client",
+    "build-host": "rollup --config host.rollup.config.js",
+    "build-client": "rollup --config client.rollup.config.js"
+  },
+  "author": "Jelmer van der Linde",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^2.0.3",
+    "rollup": "^0.61.2",
+    "rollup-plugin-commonjs": "^9.1.3",
+    "rollup-plugin-css-porter": "^0.1.2",
+    "rollup-plugin-node-resolve": "^3.3.0"
+  },
+  "dependencies": {
+    "ol": "^4.6.5",
+    "pg": "^7.4.3"
+  }
+}
