@@ -7,7 +7,8 @@ module.exports = {
 	targets: [
 		{
 			dest: 'build/client.js',
-			format: 'iife'
+			format: 'iife',
+			sourcemap: true
 		}
 	],
 	plugins: [

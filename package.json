@@ -20,8 +20,11 @@
     "rollup-plugin-node-resolve": "^3.3.0"
   },
   "dependencies": {
+    "codemirror": "^5.39.0",
     "ol": "^4.6.5",
     "pg": "^7.4.3",
+    "pg-postgis-types": "^3.0.0",
+    "proj4": "^2.4.4",
     "tunnel-ssh": "^4.1.4"
   }
 }

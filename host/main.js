@@ -1,7 +1,14 @@
 import Pool from '../lib/pool.js';
 const {app, BrowserWindow, ipcMain} = require('electron');
-const pg = require('pg');
 const tunnel = require('tunnel-ssh');
+const pg = require('pg');
+const postgis = require('pg-postgis-types').default;
+const wkx = require('wkx');
+
+// Set identify function, we do the parsing in the client.
+postgis.setGeometryParser((value) => {
+	return wkx.Geometry.parse(new Buffer(value, 'hex')).toGeoJSON({shortCrs: true});
+});
 
 let win = null;
 
@@ -62,8 +69,6 @@ function pgConnectOverSSH(config) {
 	});
 }
 
-const connections = new Pool();
-
 function connect(config) {
 	if ('ssh' in config)
 		return pgConnectOverSSH(config);
@@ -71,14 +76,26 @@ function connect(config) {
 		return pgConnect(config);
 }
 
+const connections = new Pool();
+
 ipcMain.on('db-connect', (event, serial, config) => {
 	connect(config).then(
 		(client) => {
 			const connectionId = connections.add(client);
-			event.sender.send('db-connected', serial, connectionId);
+
+			const fetcher = (sql, cb) => {
+				client.query(sql).then(res => cb(null, res.rows), err => cb(err));
+			};
+
+			postgis(fetcher, connectionId.toString(), (err, oids) => {
+				if (err)
+					event.sender.send('db-error', serial, err);
+				else
+					event.sender.send('db-connected', serial, connectionId);
+			});
 		},
 		(err) => {
-			event.sender.send('db-error', serial, err);
+			event.sender.send('db-error', serial, err.message);
 		});
 });
 
