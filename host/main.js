@@ -13,9 +13,15 @@ postgis.setGeometryParser((value) => {
 let win = null;
 
 function createWindow() {
-	win = new BrowserWindow();
+	win = new BrowserWindow({
+		titleBarStyle: 'hiddenInset',
+		webPreferences: {
+			webgl: false,
+			blinkFeatures: 'CSSBackdropFilter'
+		}
+	});
 	win.loadFile('client.html');
-	win.webContents.openDevTools();
+	// win.webContents.openDevTools();
 	win.on('closed', () => {
 		win = null;
 	});
