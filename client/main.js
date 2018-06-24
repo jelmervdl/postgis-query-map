@@ -1,5 +1,6 @@
 import Map from 'ol/map';
 import View from 'ol/view';
+import Overlay from 'ol/overlay';
 import TileLayer from 'ol/layer/tile';
 import XYZ from 'ol/source/xyz';
 import VectorSource from 'ol/source/vector';
@@ -11,6 +12,7 @@ import CodeMirror from 'codemirror';
 import 'codemirror/mode/sql/sql.js';
 import 'ol/ol.css';
 import 'codemirror/lib/codemirror.css';
+import './popup.css';
 import './main.css';
 import * as db from '../lib/db.js';
 
@@ -31,11 +33,67 @@ proj4.defs("EPSG:28992","+proj=sterea\
 // 	extent: [-285401.92, 22598.08, 595401.9199999999, 903401.9199999999]
 // }));
 
+function isObject(item) {
+	return (item && typeof item === 'object' && !Array.isArray(item));
+}
+
+function assignDeep(target, ...sources) {
+	sources.forEach(source => {
+		for (const key in source) {
+			if (isObject(source[key]) && (key in target)) {
+				assignDeep(target[key], source[key]);
+			} else {
+				if (target instanceof window.Element && !(key in target))
+					target.setAttribute(key, source[key]);
+				else
+					Object.assign(target, {[key]: source[key]});
+			}
+		}
+	});
+
+	return target;
+};
+
+function createElement(tagName, properties = {}, content = []) {
+	var el = document.createElement(tagName);
+
+	assignDeep(el, properties);
+
+	if (!Array.isArray(content))
+		content = [content];
+
+	content.forEach(function(child) {
+		if (child === null || child === undefined)
+			return;
+		
+		if (child instanceof window.Element || child instanceof window.DocumentFragment)
+			el.appendChild(child);
+		else
+			el.appendChild(document.createTextNode(child));
+	});
+
+	return el;
+}
+
 class Client {
 	constructor(connection) {
 		this.connection = connection;
 
 		this.result = new VectorSource();
+
+		this.popup = new Overlay({
+			element: document.querySelector('#popup'),
+			autoPan: true,
+			autoPanAnimation: {
+				duration: 250
+			}
+		});
+
+		this.popup.getElement().querySelector('.ol-popup-closer').addEventListener('click', e => {
+			this.popup.setPosition(undefined);
+			e.target.blur();
+			e.preventDefault();
+		});
 
 		this.map = new Map({
 			target: 'map',
@@ -49,10 +107,38 @@ class Client {
 					source: this.result
 				})
 			],
+			overlays: [
+				this.popup
+			],
 			view: new View({
 				center: [0, 0],
 				zoom: 2
 			})
+		});
+
+		this.map.on('pointermove', e => {
+			const hit = this.map.hasFeatureAtPixel(e.pixel);
+			this.map.getTargetElement().style.cursor = hit ? 'pointer' : '';
+		});
+
+		this.map.on('singleclick', e => {
+			const features = [];
+
+			this.map.forEachFeatureAtPixel(e.pixel, function(feature) {
+	        	features.push(createElement('table', {}, Object.entries(feature.get('row')).map(entry => {
+	        		return createElement('tr', {}, [
+	        			createElement('th', {}, [entry[0]]),
+	        			createElement('td', {}, [entry[1]])
+	        		]);
+	        	})));
+			});
+
+			const contentEl = this.popup.getElement().querySelector('.ol-popup-content');
+			contentEl.innerHTML = '';
+
+			features.forEach(table => contentEl.appendChild(table));
+
+			this.popup.setPosition(features.length ? e.coordinate : undefined);
 		});
 
 		this.editor = CodeMirror(document.querySelector('#editor'), {
@@ -87,7 +173,6 @@ class Client {
 				featureProjection: this.map.getView().getProjection(),
 				dataProjection: format.readProjection(geojson)
 			});
-			console.log(feature.getGeometry());
 			feature.set('row', Object.entries(row).reduce((obj, entry) => {
 				if (entry[1] instanceof Object)
 					return obj;
