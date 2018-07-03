@@ -7,13 +7,18 @@
   </head>
   <body>
     <div id="titlebar">
-      <div class="button-group">
-        <button class="active">Map</button>
-        <button>Table</button>
+      <div id="view-switch" class="button-group" data-property="activeView">
+        <button data-view="map">Map</button>
+        <button data-view="table">Table</button>
       </div>
     </div>
     <div id="container">
-      <div id="map"></div>
+      <div id="visualisation">
+        <div data-view="map" id="map"></div>
+        <div data-view="table">
+          <div id="data-table"></div>
+        </div>
+      </div>
       <div id="editor"></div>
     </div>
     <div id="popup" class="ol-popup">

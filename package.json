@@ -21,6 +21,7 @@
   },
   "dependencies": {
     "codemirror": "^5.39.0",
+    "frappe-datatable": "^0.0.9",
     "ol": "^4.6.5",
     "pg": "^7.4.3",
     "pg-postgis-types": "^3.0.0",

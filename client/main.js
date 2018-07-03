@@ -9,9 +9,11 @@ import GeoJSON from 'ol/format/geojson';
 import Projection from 'ol/proj/projection';
 import proj from 'ol/proj';
 import CodeMirror from 'codemirror';
+import DataTable from 'frappe-datatable';
 import 'codemirror/mode/sql/sql.js';
 import 'ol/ol.css';
 import 'codemirror/lib/codemirror.css';
+import 'frappe-datatable/dist/frappe-datatable.css';
 import './popup.css';
 import './main.css';
 import * as db from '../lib/db.js';
@@ -79,7 +81,7 @@ class Client {
 	constructor(connection) {
 		this.connection = connection;
 
-		this.result = new VectorSource();
+		this.layer = new VectorSource();
 
 		this.popup = new Overlay({
 			element: document.querySelector('#popup'),
@@ -104,7 +106,7 @@ class Client {
 					})
 				}),
 				new VectorLayer({
-					source: this.result
+					source: this.layer
 				})
 			],
 			overlays: [
@@ -125,7 +127,7 @@ class Client {
 			const features = [];
 
 			this.map.forEachFeatureAtPixel(e.pixel, function(feature) {
-	        	features.push(createElement('table', {}, Object.entries(feature.get('row')).map(entry => {
+	        	features.push(createElement('table', {className: 'feature-table'}, Object.entries(feature.get('row')).map(entry => {
 	        		return createElement('tr', {}, [
 	        			createElement('th', {}, [entry[0]]),
 	        			createElement('td', {}, [entry[1]])
@@ -158,6 +160,35 @@ class Client {
 				'Ctrl-Space': 'autocomplete'
 			}
 		});
+
+		this.table = new DataTable(document.querySelector('#data-table'), {
+			columns: [],
+			data: [],
+
+		});
+
+		this.result = null;
+
+		document.querySelector('#view-switch').addEventListener('click', e => {
+			if (e.target.matches('button[data-view]'))
+				this.setActiveView(e.target.dataset.view);
+		});
+
+		this.setActiveView('map');
+	}
+
+	setActiveView(view) {
+		this.activeView = view;
+
+		document.querySelectorAll('#view-switch button').forEach(button => {
+			button.classList.toggle('active', button.dataset.view == view);
+		});
+
+		document.querySelectorAll('#visualisation > [data-view]').forEach(visualisation => {
+			visualisation.classList.toggle('active', visualisation.dataset.view == view);
+		});
+
+		// this.updateView();
 	}
 
 	submitQuery() {
@@ -166,13 +197,37 @@ class Client {
 	}
 
 	showResult(result) {
+		this.result = result;
+		this.clearMap();
+		this.clearTable();
+		this.updateMap();
+		this.updateTable();
+	}
+
+	updateView() {
+		if (!this.result)
+			return;
+		
+		switch (this.activeView) {
+			case 'map':
+				return this.updateMap();
+
+			case 'table':
+				return this.updateTable();
+		}
+	}
+
+	updateMap() {
 		const format = new GeoJSON();
-		const features = result.rows.map(row => {
+
+		const features = this.result.rows.map(row => {
 			const geojson = Object.values(row).find(value => value instanceof Object);
+
 			const feature = format.readFeature(geojson, {
 				featureProjection: this.map.getView().getProjection(),
 				dataProjection: format.readProjection(geojson)
 			});
+
 			feature.set('row', Object.entries(row).reduce((obj, entry) => {
 				if (entry[1] instanceof Object)
 					return obj;
@@ -180,12 +235,31 @@ class Client {
 				obj[entry[0]] = entry[1];
 				return obj;
 			}, {}));
+
 			return feature;
 		});
-		
-		this.result.clear();
-		this.result.addFeatures(features);
-		this.map.getView().fit(this.result.getExtent());
+
+		this.layer.addFeatures(features);
+		this.map.updateSize();
+		this.map.getView().fit(this.layer.getExtent());
+	}
+
+	clearMap() {
+		this.layer.clear();
+	}
+
+	updateTable() {
+		const columns = this.result.fields.map(field => field.name);
+
+		const rows = this.result.rows.map(row => columns.map(name => {
+			return row[name];
+		}));
+
+		this.table.refresh(rows, columns);
+	}
+
+	clearTable() {
+		// this.table.destroy();
 	}
 }
 
