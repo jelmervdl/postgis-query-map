@@ -3,6 +3,7 @@ html, body {
 	margin: 0;
 	padding: 0;
 	font: 12px/1.5 sans-serif;
+	-webkit-font-smoothing: antialiased;
 }
 
 #titlebar {
@@ -13,11 +14,66 @@ html, body {
 	height: 36px;
 	line-height: 36px;
 	backdrop-filter: blur(10px);
-	border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+	background-image: -webkit-linear-gradient(
+		rgba(236, 236, 236, 0.7) 0%, 
+		rgba(236, 236, 236, 0.7) 1.9%, 
+		rgba(233, 233, 233, 0.7) 2%, 
+		rgba(210, 210, 210, 0.7) 100%);
+	color: #434648;
+	border-bottom: 1px solid #bbb;
 	-webkit-user-select: none;
 	-webkit-app-region: drag;
 	z-index: 10;
 	text-align: center;
+}
+
+#titlebar button {
+	height: 1.75em;
+	line-height: 1.75em;
+	margin-top: 8px;
+	margin-left: 10.5px;
+	padding: 0 13px;
+	border-radius: 3px;
+	border: 0;
+	cursor: default;
+	display: inline-block;
+	font-size: 13.02px;
+	background: -webkit-gradient(linear, left top, left bottom, from(#fefefe), to(#f1f1f1));
+	color: #231f20;
+	box-shadow: 0 0.5px 0.05px rgba(0, 0, 0, 0.4), 0 -0.5px 0 rgba(0, 0, 0, 0.12);
+	-webkit-app-region: no-drag;
+}
+
+#titlebar button:focus {
+	outline: none;
+}
+
+#titlebar button:active {
+	background: #e7e7e7;
+}
+
+#titlebar button.active {
+	background: -webkit-gradient(linear, left top, left bottom, from(rgb(112, 113, 114)), to(rgb(101, 103, 104)));
+	color: #fff;
+}
+
+#titlebar .button-group {
+	display: inline-flex;
+}
+
+#titlebar .button-group button {
+	margin-left: 0;
+	border-radius: 0;
+}
+
+#titlebar .button-group button:first-child {
+	border-top-left-radius: 3px;
+	border-bottom-left-radius: 3px;
+}
+
+#titlebar .button-group button:last-child {
+	border-top-right-radius: 3px;
+	border-bottom-right-radius: 3px;
 }
 
 #container {
@@ -38,6 +94,7 @@ html, body {
 	margin-top: 37px;
 	flex: 0 0 250px;
 	background: white;
+	border-left: 1px solid #bbb;
 }
 
 #editor .CodeMirror {
