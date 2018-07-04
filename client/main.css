@@ -87,6 +87,7 @@ html, body {
 	display: flex;
 	flex-direction: column;
 	background: white;
+	overflow: hidden;
 }
 
 #visualisation > * {
@@ -100,6 +101,11 @@ html, body {
 
 #visualisation > [data-view=table] {
 	background: white;
+	padding-top: 36px;
+}
+
+#visualisation .datatable .dt-scrollable {
+	max-height: calc(100vh - 36px - 37px);
 }
 
 #map .ol-zoom {

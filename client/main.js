@@ -164,7 +164,8 @@ class Client {
 		this.table = new DataTable(document.querySelector('#data-table'), {
 			columns: [],
 			data: [],
-
+			layout: 'fluid',
+			clusterize: true
 		});
 
 		this.result = null;
@@ -188,7 +189,7 @@ class Client {
 			visualisation.classList.toggle('active', visualisation.dataset.view == view);
 		});
 
-		// this.updateView();
+		this.updateView();
 	}
 
 	submitQuery() {
@@ -200,8 +201,7 @@ class Client {
 		this.result = result;
 		this.clearMap();
 		this.clearTable();
-		this.updateMap();
-		this.updateTable();
+		this.updateView();
 	}
 
 	updateView() {
