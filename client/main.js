@@ -243,7 +243,15 @@ class Client {
 	}
 
 	submitQuery() {
-		const query = this.editor.getDoc().getValue();
+		const geojson = new GeoJSON();
+		const query = "WITH\n"
+			+ `_shapes_data AS (SELECT '${geojson.writeFeatures(this.drawing.getFeatures())}'::json as fc),\n`
+			+ "_shapes_features AS (SELECT json_array_elements(fc->'features') as feature FROM _shapes_data),\n"
+			+ "_shapes AS (SELECT ST_SetSRID(ST_GeomFromGeoJSON(feature->>'geometry'), 4326) as geom FROM _shapes_features)\n"
+			+ this.editor.getDoc().getValue();
+
+		console.log(query);
+
 		this.connection.query(query).then(this.showResult.bind(this));
 	}
 
