@@ -112,6 +112,11 @@ html, body {
 	top: calc(0.5em + 36px);
 }
 
+#map .toggle-drawing {
+	top: calc(4.5em + 36px);
+	left: 0.5em;
+}
+
 #editor {
 	margin-top: 37px;
 	flex: 0 0 250px;
