@@ -1,13 +1,16 @@
-import Map from 'ol/map';
-import View from 'ol/view';
-import Overlay from 'ol/overlay';
-import TileLayer from 'ol/layer/tile';
-import XYZ from 'ol/source/xyz';
-import VectorSource from 'ol/source/vector';
-import VectorLayer from 'ol/layer/vector';
-import GeoJSON from 'ol/format/geojson';
-import Projection from 'ol/proj/projection';
-import proj from 'ol/proj';
+import Map from 'ol/map.js';
+import View from 'ol/view.js';
+import Overlay from 'ol/overlay.js';
+import TileLayer from 'ol/layer/tile.js';
+import XYZ from 'ol/source/xyz.js';
+import VectorSource from 'ol/source/vector.js';
+import VectorLayer from 'ol/layer/vector.js';
+import GeoJSON from 'ol/format/geojson.js';
+import Projection from 'ol/proj/projection.js';
+import proj from 'ol/proj.js';
+import Draw from 'ol/interaction/draw.js';
+import Control from 'ol/control/control.js';
+import controlDefaults from 'ol/control.js';
 import CodeMirror from 'codemirror';
 import DataTable from 'frappe-datatable';
 import 'codemirror/mode/sql/sql.js';
@@ -77,11 +80,48 @@ function createElement(tagName, properties = {}, content = []) {
 	return el;
 }
 
+class InteractionControl extends Control {
+	constructor(interaction, opt_options) {
+		const options = opt_options || {};
+
+		const button = createElement('button', {}, [options.label]);
+		button.addEventListener('click', e => {
+			if (this.isActive())
+				this.getMap().removeInteraction(this.interaction);
+			else
+				this.getMap().addInteraction(this.interaction);
+		});
+
+		const element = createElement('div', {className: 'toggle-drawing ol-unselectable ol-control'}, [button]);
+
+		super({
+			element: element,
+			target: options.target
+		});
+
+		this.interaction = interaction;
+	}
+
+	isActive() {
+		return this.getMap().getInteractions().getArray().includes(this.interaction);
+	}
+}
+
 class Client {
 	constructor(connection) {
 		this.connection = connection;
 
 		this.layer = new VectorSource();
+
+		this.drawing = new VectorSource({wrapX: false});
+
+		this.drawingControl = new InteractionControl(
+			new Draw({
+				source: this.drawing,
+				type: 'Polygon'
+			}),
+			{label: 'D'}
+		);
 
 		this.popup = new Overlay({
 			element: document.querySelector('#popup'),
@@ -99,6 +139,7 @@ class Client {
 
 		this.map = new Map({
 			target: 'map',
+			controls: controlDefaults.defaults().extend([this.drawingControl]),
 			layers: [
 				new TileLayer({
 					source: new XYZ({
@@ -107,6 +148,9 @@ class Client {
 				}),
 				new VectorLayer({
 					source: this.layer
+				}),
+				new VectorLayer({
+					source: this.drawing
 				})
 			],
 			overlays: [
@@ -124,9 +168,15 @@ class Client {
 		});
 
 		this.map.on('singleclick', e => {
+			if (this.drawingControl.isActive())
+				return;
+
 			const features = [];
 
 			this.map.forEachFeatureAtPixel(e.pixel, function(feature) {
+				if (!feature.get('row'))
+					return;
+
 	        	features.push(createElement('table', {className: 'feature-table'}, Object.entries(feature.get('row')).map(entry => {
 	        		return createElement('tr', {}, [
 	        			createElement('th', {}, [entry[0]]),
