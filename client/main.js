@@ -248,7 +248,7 @@ class Client {
 			+ `_shapes_data AS (SELECT '${geojson.writeFeatures(this.drawing.getFeatures())}'::json as fc),\n`
 			+ "_shapes_features AS (SELECT json_array_elements(fc->'features') as feature FROM _shapes_data),\n"
 			+ "_shapes AS (SELECT ST_SetSRID(ST_GeomFromGeoJSON(feature->>'geometry'), 4326) as geom FROM _shapes_features)\n"
-			+ this.editor.getDoc().getValue();
+			+ this.editor.getDoc().getValue().replace(/^\s*WITH\s+/, ",\n");
 
 		console.log(query);
 
